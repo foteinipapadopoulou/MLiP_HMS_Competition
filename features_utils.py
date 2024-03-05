@@ -102,11 +102,10 @@ def calc_eeg_statistics(data_array):
 
 def preprocess_eeg(eeg):
     """
-    Preprocess the eeg data for the time frame that has been labeled and create new features
-    First we calculate the differences of the eeg readings and then calculate some statistics
-    for these differences. The statistics we calculated will be the features we will use
+    Preprocess the eeg data and create new features
+    First we calculate the differences of the eeg readings and then calculate some features for these differences.
     
-    Returns a data frame with the eeg_id, the offset, the class and the new values we calculated
+    Returns an array with the new values we calculated
     """
     eeg = eeg.dropna()
     # Calculate the new features that will be the differences of the actual electrode readings
@@ -143,6 +142,7 @@ def preprocess_eeg(eeg):
     statistics = calc_eeg_statistics(data_array)
     counts = count_sign_changes(data_array)
     decor = decorrelation_time(data_array)
-    preprocess = np.column_stack((statistics, counts, decor)).reshape(1,-1)
+    c_max = max_cross_corr(data_array)
+    preprocess = np.column_stack((statistics, counts, decor,c_max)).reshape(1,-1)
 
     return preprocess
