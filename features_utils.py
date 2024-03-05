@@ -6,11 +6,42 @@ import sys
 
 from statsmodels.tsa.stattools import acf, ccf, acovf
 
-def decorrelation_time(data_array):
-    decorrelation_times = {}
+def max_cross_corr(data_array):
+    """ 
+    Calculates the maximum cross-correlation coefficient (c_max) for every pair of channels of an eeg array
     
+    Returns an array with the c_max for each pair
+    """
+    
+    num_channels = data_array.shape[1]
+    max_cross_values = []
+    
+    # Calculate autocorrelation for each channel
+    autocorrs = [acf(data_array[:, i], adjusted=True)[0] for i in range(num_channels)]
+    
+    # Iterate over all combinations of two channels
+    for i in range(num_channels):
+        for j in range(i + 1, num_channels):  # Avoid repeating pairs
+            autocorr1 = autocorrs[i]
+            autocorr2 = autocorrs[j]
+            cross_corr = ccf(data_array[:, i], data_array[:, j]) / (np.sqrt(autocorr1 * autocorr2))
+            abs_cross_corr = np.abs(cross_corr)
+            c_max = np.max(abs_cross_corr)
+            max_cross_values.append(c_max)
+    
+    return np.array([max_cross_values])
+
+def decorrelation_time(data_array):
+     """ 
+    Calculates the decorrelation time (ie first zero-crossing of autocorrelation function) in the columns of an array
+    
+    Returns an array with the decorrelation time of each column
+    """
+     
+    # Initialize dictionary to store 
+    decorrelation_times = {}
+
     # Iterate through the columns of the array
-#     for i, col in enumerate(df.columns):
     for i in range(data_array.shape[1]):
         # Use acf to calculate the autocorrelation function
         autocorr = acf(data_array[:,i])
@@ -28,42 +59,41 @@ def decorrelation_time(data_array):
 
 def count_sign_changes(data_array):
     """ 
-    Calculates the number of zero-crossings in the columns of a dataframe
+    Calculates the number of zero-crossings in the columns of an array
     
-    Returns a dataframe with the amount of sign changes in each column
+    Returns an array with the amount of sign changes in each column
     """
     # Initialize dictionary to store sign change counts
     sign_changes_counts = {}
     
     # Iterate through the columns of the array
-#     for i,col in enumerate(df.columns):
     for i in range(data_array.shape[1]):
-        #Find the positions of any sign change and 
+        #Find the positions of any sign change and find the counts of them
         sign_changes =  len(np.where(np.diff(np.sign(data_array[:, i])))[0])
         sign_changes_counts[i] = sign_changes
     
     counts = np.array([list(sign_changes_counts.values())])
     return counts
 
-def calc_eeg_statistics(eeg):
+def calc_eeg_statistics(data_array):
     """
     Calculates statistics for a sequence of eeg readings
-    The statistics it calcualtes are the Mean, the Median, Variance, Standard Deviation, Skewness,
+    The statistics it calculates are the Mean, the Median, Variance, Standard Deviation, Skewness,
     Kurtosis and the Peak-to-Peak values
     
-    Returns a dataframe with the statistics calculated 
+    Returns an array with the statistics calculated 
     """
 
     #Calculate the features for each column of the EEG
 
-    mean = np.nanmean(eeg, axis=0)
-    median = np.nanmedian(eeg, axis=0)
-    var = np.nanvar(eeg, axis=0)
-    std = np.nanstd(eeg, axis=0)
-    skew = stats.skew(eeg, axis=0, nan_policy='omit')
-    kurt = stats.kurtosis(eeg, axis=0, nan_policy='omit')
-    pkpk = np.nanmax(eeg, axis=0) - np.nanmin(eeg, axis=0)
-    area = np.abs(eeg).sum(axis = 0)
+    mean = np.nanmean(data_array, axis=0)
+    median = np.nanmedian(data_array, axis=0)
+    var = np.nanvar(data_array, axis=0)
+    std = np.nanstd(data_array, axis=0)
+    skew = stats.skew(data_array, axis=0, nan_policy='omit')
+    kurt = stats.kurtosis(data_array, axis=0, nan_policy='omit')
+    pkpk = np.nanmax(data_array, axis=0) - np.nanmin(data_array, axis=0)
+    area = np.abs(data_array).sum(axis = 0)
     
     #Stack the features of the EEG in new columns and name them accordingly
     features = np.column_stack((mean, median, var, std,skew, kurt,pkpk,area)).reshape(1,-1)
