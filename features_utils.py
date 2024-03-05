@@ -32,7 +32,7 @@ def max_cross_corr(data_array):
     return np.array([max_cross_values])
 
 def decorrelation_time(data_array):
-     """ 
+    """ 
     Calculates the decorrelation time (ie first zero-crossing of autocorrelation function) in the columns of an array
     
     Returns an array with the decorrelation time of each column
