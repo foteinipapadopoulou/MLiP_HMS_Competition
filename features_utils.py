@@ -217,6 +217,7 @@ def preprocess_eeg(eeg):
     counts = count_sign_changes(data_array)
     decor = decorrelation_time(data_array)
     c_max = max_cross_corr(data_array)
-    preprocess = np.column_stack((statistics, counts, decor,c_max)).reshape(1,-1)
+    energies = calculate_eeg_energies(data_array)
+    preprocess = np.column_stack((statistics, counts, decor, c_max, energies)).reshape(1,-1)
 
     return preprocess
