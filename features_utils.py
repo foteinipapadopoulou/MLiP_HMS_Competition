@@ -6,6 +6,80 @@ import sys
 
 from statsmodels.tsa.stattools import acf, ccf, acovf
 
+def eeg_bandpass(eeg, min_freq, max_freq):
+    """
+    Applies a filter to the eeg signal to keep the (min_freq,max_freq) range of the signal
+    
+    Returns the filtered signal
+    """
+    #this function get signal and range of frequencies we interested and filter out every other frequency components
+#     from signal
+    
+    # 10 is the order of the filter, 'lp'/'hp' stands for low-pass/high-pass filter that we are interested in 
+#     fs is the frequency of the sample
+    sos_lp = butter(10, max_freq, 'lp', fs=200, output='sos') #deletes the signals above max_freq
+    sos_hp = butter(10, min_freq, 'hp', fs=200, output='sos') #deletes the signals below min_freq
+    
+    eeg_low = sosfilt(sos_lp, eeg) #low-pass filtering
+    eeg_high = sosfilt(sos_hp, eeg_low) #high-pass filtering
+    
+    return eeg_high
+
+def eeg2band(eeg, band='alpha'):
+    """
+    Passes the min and the max frequencies for a band to be used for filtering
+    
+    Returns the filtered eeg on the specific band
+    """
+    bands = {'alpha':(8, 12), 'beta':(12,30), 'gamma':(35,99), 'delta':(0.5,4), 'theta':(4,8)}
+    band_range = bands[band]
+    min_freq, max_freq = band_range[0], band_range[1]
+    
+    return eeg_bandpass(eeg, min_freq, max_freq)    
+
+def calculate_channel_energies(eeg_channel):
+    """
+    Calculates the percentage of energy for the different bands of an eeg channel and adds the total energy of the channel in the end
+    
+    Returns an array with the channel's energy
+    """
+    bands = ['delta','theta' ,'alpha', 'beta', 'gamma']
+    #Calculates the total energy of the channel
+    squared = np.abs(eeg_channel)**2
+    energy = np.sum(squared)
+    
+    energies = []
+    for band in bands:
+        #Filters the signal to a specific band
+        eeg_band = eeg2band(eeg_channel,band)
+        
+        #Calculates the percentage of a band's energy
+        percentage = np.sum(eeg_band)/energy
+        energies.append(percentage)
+        
+    energies.append(energy)
+    channel_energies = np.array([energies])
+
+    return channel_energies
+
+def calculate_eeg_energies(data_array):
+    """
+    Calculates the percentage of energies for all channels of an eeg
+    
+    Returns an array of the percentages of energies
+    """
+    eeg_energy = []
+    
+    #Iterate through every column
+    for i in range(data_array.shape[1]):
+        eeg_channel = data_array[:,i]
+        channel_energies = calculate_channel_energies(eeg_channel)
+        eeg_energy.append(channel_energies)
+    
+    eeg_energy_array = np.array([np.concatenate(eeg_energy).flat])
+
+    return eeg_energy_array
+
 def max_cross_corr(data_array):
     """ 
     Calculates the maximum cross-correlation coefficient (c_max) for every pair of channels of an eeg array
