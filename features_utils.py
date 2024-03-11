@@ -4,6 +4,7 @@ import numpy as np
 import scipy.stats as stats
 import sys
 
+from scipy.signal import butter, sosfilt
 from statsmodels.tsa.stattools import acf, ccf, acovf
 
 def eeg_bandpass(eeg, min_freq, max_freq):
