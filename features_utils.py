@@ -46,8 +46,7 @@ def calculate_channel_energies(eeg_channel):
     """
     bands = ['delta','theta' ,'alpha', 'beta', 'gamma']
     #Calculates the total energy of the channel
-    squared = np.abs(eeg_channel)**2
-    energy = np.sum(squared)
+    energy = np.sum(eeg_channel**2)
     
     energies = []
     for band in bands:
@@ -55,7 +54,7 @@ def calculate_channel_energies(eeg_channel):
         eeg_band = eeg2band(eeg_channel,band)
         
         #Calculates the percentage of a band's energy
-        percentage = np.sum(eeg_band)/energy
+        percentage = np.sum(eeg_band**2)/energy
         energies.append(percentage)
         
     energies.append(energy)
